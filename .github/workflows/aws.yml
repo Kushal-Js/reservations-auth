@@ -1,18 +1,64 @@
-name: CI CD
-
-on:
+name: Deploy to AWS EC2
+'on':
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
-
+    branches:
+      - main
+permissions:
+  id-token: write
+  contents: read
 jobs:
-
-  build:
-
+  Build_and_push_image: # specifying one job:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        run: >-
+          docker login -u ${{ secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD }}
+      - name: Build Docker Image
+        run: docker compose build
+      - name: Publish Docker Image
+        run: docker compose push
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: 'arn:aws:iam::734651757593:role/OIDC-LInk'
+          aws-region: '${{ secrets.AWS_REGION }}'
+      - name: copy file via ssh key
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: '${{ secrets.EC2_HOST }}'
+          username: '${{ secrets.EC2_USERNAME }}'
+          key: '${{ secrets.EC2_PRIVATE_KEY }}'
+          port: 22
+          source: docker-compose.yml,.env,package.json,pnpm-lock.yaml,tsconfig.json,nest-cli.json
+          target: /home/ubuntu
+  Pull_and_deploy_in_ec2:
+    runs-on: ubuntu-latest
+    needs: Build_and_push_image
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: '${{ secrets.EC2_HOST }}'
+          username: '${{ secrets.EC2_USERNAME }}'
+          key: '${{ secrets.EC2_PRIVATE_KEY }}'
+          script: |
+
+            #Delete old containers and images with old tags
+            docker rm -vf $(docker ps -a -q) && docker rmi -f $(docker images -a -q)
+
+            #Pull from Docker Hub
+            docker pull kushalgaur123/reservations-auth:latest
+
+            #Clear existing container and images with added project name, This will prevent the command from clearing containers of other docker compose file
+
+            #docker-compose down
+
+
+            #Run the Docker commands for deployment with added project name, future down command will clear containers and images with this project name
+
+            docker-compose up
