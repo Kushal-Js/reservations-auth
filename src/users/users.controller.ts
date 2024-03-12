@@ -18,4 +18,9 @@ export class UsersController {
   async getUser(@CurrentUser() user: UserDocument) {
     return user;
   }
+
+  @Get('show')
+  async showdata() {
+    return 'This is Kushal hotel services';
+  }
 }
