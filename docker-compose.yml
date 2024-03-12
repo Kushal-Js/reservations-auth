@@ -1,0 +1,34 @@
+version: '3.3'
+services:
+  mongodb:
+    image : mongo
+    container_name: mongodb
+    volumes:
+      - ./database:/data/db
+    ports:
+      - 27017:27017
+    networks:
+      - nesjs-network
+    restart: always
+  auth:
+    container_name: auth-container
+    image: kushalgaur123/auth:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: pnpm run start:prod
+    env_file:
+      - .env
+    ports:
+      - '3001:3001'
+    networks:
+      - nesjs-network
+    depends_on:
+      - mongodb
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    restart: unless-stopped
+networks:
+    nesjs-network:
+      driver: bridge
