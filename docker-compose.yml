@@ -20,7 +20,8 @@ services:
     env_file:
       - .env
     ports:
-      - '3001:3001'
+      - 3001:3001
+      - 3003:3003
     networks:
       - nesjs-network
     depends_on:
