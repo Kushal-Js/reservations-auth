@@ -20,9 +20,11 @@ export class AuthController {
     response.send(jwt);
   }
 
-  //@UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @MessagePattern('authenticate')
   async authenticate(@Payload() data: any) {
-    return data.user;
+    console.log('--------authenticate--------', data);
+    const noUser = data?.user || 'no user';
+    return noUser;
   }
 }
