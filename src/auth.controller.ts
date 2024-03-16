@@ -27,4 +27,11 @@ export class AuthController {
     const noUser = data?.user || 'no user';
     return noUser;
   }
+
+  @MessagePattern('noauthenticate')
+  async noauthenticate(@Payload() data: any) {
+    console.log('--------authenticate--------', data);
+    const noUser = data?.user || 'no user';
+    return noUser;
+  }
 }
