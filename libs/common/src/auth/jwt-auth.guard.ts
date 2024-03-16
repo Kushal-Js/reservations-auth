@@ -1,16 +1,14 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Reflector } from '@nestjs/core';
-import { catchError, map, Observable, of, tap } from 'rxjs';
 import { AUTH_SERVICE } from '../constants/services';
-import { UserDto } from '../dto';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -21,41 +19,27 @@ export class JwtAuthGuard implements CanActivate {
     private readonly reflector: Reflector,
   ) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context?.switchToHttp()?.getRequest();
+
     const jwt =
-      context.switchToHttp().getRequest().cookies?.Authentication ||
-      context.switchToHttp().getRequest().headers?.authentication;
+      request.cookies?.Authentication || request.headers?.authentication;
 
     if (!jwt) {
       return false;
     }
-
-    const roles = this.reflector.get<string[]>('roles', context.getHandler());
-
-    return this.authClient
-      .send<UserDto>('authenticate', {
-        Authentication: jwt,
-      })
-      .pipe(
-        tap((res) => {
-          if (roles) {
-            for (const role of roles) {
-              if (!res.roles?.includes(role)) {
-                this.logger.error('The user does not have valid roles.');
-                // throw new UnauthorizedException();
-                return true;
-              }
-            }
-          }
-          context.switchToHttp().getRequest().user = res;
-        }),
-        map(() => true),
-        catchError((err) => {
-          this.logger.error(err);
-          return of(false);
-        }),
-      );
+    // const resp = await this.authClient.validateToken(jwt);
+    const resp = await this.authClient.send('validateToken', {
+      Authentication: jwt,
+    });
+    console.log('----------auth lafda-------', resp, request);
+    request.decodedData = resp;
+    return true;
+  }
+  catch(error) {
+    console.log('auth error - ', error.message);
+    throw new ForbiddenException(
+      error.message || 'session expired! Please sign In',
+    );
   }
 }

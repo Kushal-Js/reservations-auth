@@ -31,4 +31,10 @@ export class AuthService {
 
     return token;
   }
+
+  validateToken(token: string) {
+    return this.jwtService.verify(token, {
+      secret: this.configService.get('JWT_SECRET'),
+    });
+  }
 }
