@@ -28,6 +28,7 @@ export class AuthController {
     return noUser;
   }
 
+  @UseGuards(JwtAuthGuard)
   @MessagePattern('validateToken')
   async validateToken(@Payload() data: any) {
     console.log('--------validateToken--------', data);
