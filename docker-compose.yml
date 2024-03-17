@@ -12,7 +12,7 @@ services:
     restart: always
   auth:
     container_name: auth-container
-    image: kushalgaur123/auth:latest
+    image: kushalgaur123/reservations-auth:latest
     build:
       context: .
       dockerfile: ./Dockerfile
