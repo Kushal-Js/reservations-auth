@@ -10,7 +10,7 @@ services:
     networks:
       - nesjs-network
     restart: always
-  auth:
+  reservations-auth:
     container_name: auth-container
     image: kushalgaur123/reservations-auth:latest
     build:

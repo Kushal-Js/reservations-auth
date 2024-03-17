@@ -33,6 +33,7 @@ export class AuthService {
   }
 
   validateToken(token: string) {
+    console.log('---------incoming token--------', token);
     const parsedData = this.jwtService.verify(token, {
       secret: this.configService.get('JWT_SECRET'),
     });
