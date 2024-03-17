@@ -1,25 +1,24 @@
 import {
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
   Inject,
   Injectable,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { Reflector } from '@nestjs/core';
 import { AUTH_SERVICE } from '../constants/services';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   private readonly logger = new Logger(JwtAuthGuard.name);
 
-  constructor(
-    @Inject(AUTH_SERVICE) private readonly authClient: ClientProxy,
-    private readonly reflector: Reflector,
-  ) {}
+  constructor(@Inject(AUTH_SERVICE) private readonly authClient: ClientProxy) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
     const request = context?.switchToHttp()?.getRequest();
 
     const jwt =
@@ -28,18 +27,24 @@ export class JwtAuthGuard implements CanActivate {
     if (!jwt) {
       return false;
     }
-    // const resp = await this.authClient.validateToken(jwt);
-    const resp = await this.authClient.send('validateToken', {
-      Authentication: jwt,
-    });
-    console.log('----------auth lafda-------', resp, request);
-    request.decodedData = resp;
-    return true;
-  }
-  catch(error) {
-    console.log('auth error - ', error.message);
-    throw new ForbiddenException(
-      error.message || 'session expired! Please sign In',
-    );
+
+    return this.authClient
+      .send('validateToken', {
+        Authentication: jwt,
+      })
+      .pipe(
+        tap((res) => {
+          const userId = res?.userId;
+          if (userId == null || userId == '') {
+            throw new UnauthorizedException();
+          }
+          return true;
+        }),
+        map(() => true),
+        catchError((err) => {
+          this.logger.error(err);
+          return of(false);
+        }),
+      );
   }
 }
