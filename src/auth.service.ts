@@ -32,11 +32,12 @@ export class AuthService {
     return token;
   }
 
-  validateToken(token: string) {
-    console.log('---------incoming token--------', token);
-    const parsedData = this.jwtService.verify(token, {
-      secret: this.configService.get('JWT_SECRET'),
-    });
+  validateToken(token: any) {
+    const jwtToken = token?.Authentication;
+    const secret = this.configService.get('JWT_SECRET');
+    console.log('---------incoming token--------', jwtToken);
+    console.log('---------incoming token--------', secret);
+    const parsedData = this.jwtService.verify(jwtToken, secret);
     console.log('---------parsedData--------', parsedData);
     return parsedData;
   }
