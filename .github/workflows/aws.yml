@@ -61,4 +61,4 @@ jobs:
 
             #Run the Docker commands for deployment with added project name, future down command will clear containers and images with this project name
 
-            #docker-compose up -d
+            docker-compose up -d
