@@ -31,7 +31,6 @@ export class AuthController {
   //@UseGuards(JwtAuthGuard)
   @MessagePattern('validateToken')
   async validateToken(@Payload() data: any) {
-    console.log('--------validateToken--------', data);
     return await this.authService.validateToken(data);
   }
 }
