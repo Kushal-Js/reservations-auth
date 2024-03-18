@@ -37,11 +37,7 @@ export class AuthService {
   validateToken(token: any) {
     const jwtToken = token?.Authentication;
     const secret = this.configService.get('JWT_SECRET');
-    console.log('---------incoming token--------', jwtToken);
-    console.log('---------incoming token--------', secret);
     const parsedData = this.jwtService.verify(jwtToken, secret);
-    const userData = this.usersService.getUser({ _id: parsedData.userId });
-    console.log('---------parsedData--------', parsedData, userData);
     return parsedData;
   }
 }
