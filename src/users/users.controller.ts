@@ -19,6 +19,12 @@ export class UsersController {
     return user;
   }
 
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  async getAllUser() {
+    return this.usersService.getAllUser();
+  }
+
   @Get('show')
   async showdata() {
     return 'This is Kushal hotel services';
